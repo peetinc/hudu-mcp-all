@@ -36,12 +36,37 @@ Alternative key source — put the key in `~/.hudukey` (default) or any file ref
 
 | Variable | Purpose |
 |---|---|
-| `HUDU_READONLY=true` | Block all `DELETE` operations |
-| `HUDU_DISABLED_OPERATIONS=delete_companies_id,delete_articles_id` | Disable specific tools by name |
-| `HUDU_TIMEOUT_MS=30000` | HTTP request timeout |
-| `HUDU_MAX_RETRIES=3` | Retries on HTTP 429; honors `Retry-After` |
-| `HUDU_MAX_RESPONSE_BYTES=1500000` | Response body truncation guard (prevents MCP context blow-up) |
-| `HUDU_SWAGGER_PATH=/path/to/swagger.json` | Override bundled spec |
+| `HUDU_PRESET=core` | Curated tag bundle. Valid: `all` (default, 149), `readonly`, `core`, `kb`, `assets`, `passwords`, `ipam`, `processes`, `admin`. See [Presets](#presets) below. |
+| `HUDU_ENABLE_TAGS=Companies,Articles` | Whitelist Swagger tags (case-insensitive). Intersects with preset. |
+| `HUDU_DISABLE_TAGS=Rack Storage Items,Magic Dash` | Subtract tags. Applied after preset + enable. |
+| `HUDU_READONLY=true` | Block all `DELETE` (and any non-GET when combined with `preset=readonly`). |
+| `HUDU_DISABLED_OPERATIONS=delete_companies_id,delete_articles_id` | Disable specific tools by `operationId`. |
+| `HUDU_TIMEOUT_MS=30000` | HTTP request timeout. |
+| `HUDU_MAX_RETRIES=3` | Retries on HTTP 429; honors `Retry-After`. |
+| `HUDU_MAX_RESPONSE_BYTES=1500000` | Response body truncation guard (prevents MCP context blow-up). |
+| `HUDU_SWAGGER_PATH=/path/to/swagger.json` | Override bundled spec. |
+
+### Presets
+
+Default is `all` (149 tools) — matches the package name and gives agents full coverage. Claude tolerates this fine. If your agent is making bad tool choices or you're token-sensitive, try `HUDU_PRESET=core`.
+
+| Preset | Tags | ~Tools | Use case |
+|---|---|---|---|
+| `all` | every tag | 149 | Default. Full coverage. |
+| `readonly` | every tag, GET only | ~61 | Safe read agents. |
+| `core` | API Info, Companies, Articles, Assets, Asset Layouts, Asset Passwords, Users, Folders, Relations, Lists | ~52 | Day-to-day docs work. |
+| `kb` | Articles, Folders, Companies, Users, Photos, Public Photos, Uploads, Relations | ~39 | Knowledge base authoring + attachments. |
+| `assets` | Assets, Asset Layouts, Asset Passwords, Companies, Lists, Flags, Flag Types, Rack Storages, Rack Storage Items, Relations | ~57 | Asset inventory + rack mgmt. |
+| `passwords` | Asset Passwords, Password Folders, Companies, Asset Layouts, Users | ~27 | Secrets workflow (rotation, audit). |
+| `ipam` | Networks, IP Addresses, VLANs, VLAN Zones, Companies, Relations | ~32 | Network documentation. |
+| `processes` | Procedures, Procedure Tasks, Companies, Assets, Users, Relations | ~36 | Process / runbook automation. |
+| `admin` | API Info, Users, Groups, Activity Logs, Flag Types, Flags, Lists, Matchers, Expirations, Exports, S3 Exports, Magic Dash, Cards | ~40 | Platform ops / audit / exports. |
+
+**Filter precedence** (top → bottom narrows): all tools → `PRESET` → `ENABLE_TAGS` (intersect) → `DISABLE_TAGS` (subtract) → `READONLY` (GET only) → `DISABLED_OPERATIONS` (per-op).
+
+`hudu_test_connection` is always kept regardless of filters — it's a diagnostic alias of `get_api_info`.
+
+**Error handling**: Unknown `HUDU_PRESET` → hard fail at startup with valid list. Unknown tag in `ENABLE_TAGS` / `DISABLE_TAGS` → stderr warning, ignored. Filter pipeline producing zero real tools → hard fail.
 
 ## Use with Claude Code
 

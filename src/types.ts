@@ -51,4 +51,6 @@ export type ToolDef = {
   bodyParam?: string;
   formDataParams: string[];
   consumesMultipart: boolean;
+  tags: string[];
+  synthetic?: boolean;
 };

@@ -156,6 +156,7 @@ export function buildTools(spec: SwaggerSpec): ToolDef[] {
         bodyParam: bodyParam ? 'body' : undefined,
         formDataParams: formDataParams.map((p) => p.name),
         consumesMultipart,
+        tags: op.tags ?? [],
       });
     }
   }
@@ -173,6 +174,8 @@ export function buildTools(spec: SwaggerSpec): ToolDef[] {
       bodyParam: undefined,
       formDataParams: [],
       consumesMultipart: false,
+      tags: ['API Info'],
+      synthetic: true,
     });
   }
 

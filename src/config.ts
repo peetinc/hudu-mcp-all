@@ -11,7 +11,17 @@ export type Config = {
   maxRetries: number;
   maxResponseBytes: number;
   userAgentVersion: string;
+  preset?: string;
+  enableTags: string[];
+  disableTags: string[];
 };
+
+function splitCsv(value: string | undefined): string[] {
+  return (value ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
 
 const DEFAULT_MAX_RESPONSE_BYTES = 1_500_000;
 const DEFAULT_MAX_RETRIES = 3;
@@ -87,6 +97,9 @@ export function loadConfig(): Config {
     timeoutMs: parseIntEnv('HUDU_TIMEOUT_MS', DEFAULT_TIMEOUT_MS),
     maxRetries: parseIntEnv('HUDU_MAX_RETRIES', DEFAULT_MAX_RETRIES),
     maxResponseBytes: parseIntEnv('HUDU_MAX_RESPONSE_BYTES', DEFAULT_MAX_RESPONSE_BYTES),
-    userAgentVersion: '0.2.0',
+    userAgentVersion: '0.3.0',
+    preset: process.env.HUDU_PRESET?.trim() || undefined,
+    enableTags: splitCsv(process.env.HUDU_ENABLE_TAGS),
+    disableTags: splitCsv(process.env.HUDU_DISABLE_TAGS),
   };
 }

@@ -13,9 +13,10 @@ import {
 import { loadConfig } from './config.js';
 import { buildTools } from './swagger.js';
 import { callTool } from './hudu-client.js';
+import { applyFilters, FilterError } from './filter.js';
 import type { SwaggerSpec, ToolDef } from './types.js';
 
-const VERSION = '0.2.0';
+const VERSION = '0.3.0';
 
 function locateSwagger(): string {
   const here = dirname(fileURLToPath(import.meta.url));
@@ -42,7 +43,16 @@ async function main(): Promise<void> {
   const swaggerPath = locateSwagger();
   const spec = JSON.parse(readFileSync(swaggerPath, 'utf8')) as SwaggerSpec;
   const allTools = buildTools(spec);
-  const tools = allTools.filter((t) => !config.disabledOperations.has(t.name));
+
+  const filterResult = applyFilters(allTools, {
+    preset: config.preset,
+    enableTags: config.enableTags,
+    disableTags: config.disableTags,
+    readonly: config.readonly,
+    disabledOperations: config.disabledOperations,
+  });
+
+  const tools = filterResult.tools;
   const toolMap = new Map<string, ToolDef>(tools.map((t) => [t.name, t]));
 
   const server = new Server(
@@ -93,15 +103,26 @@ async function main(): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
+  const applied = filterResult.applied;
   process.stderr.write(
-    `[hudu-mcp-all v${VERSION}] loaded ${tools.length} tools from ${swaggerPath}\n` +
-      `[hudu-mcp-all] base: ${config.baseUrl}\n` +
-      `[hudu-mcp-all] readonly=${config.readonly} disabled=${config.disabledOperations.size} ` +
-      `maxRetries=${config.maxRetries} maxResponseBytes=${config.maxResponseBytes}\n`
+    `[hudu-mcp-all v${VERSION}] loaded ${tools.length}/${allTools.length} tools from ${swaggerPath}\n` +
+      `[hudu-mcp-all] preset=${applied.preset ?? '-'} ` +
+      `enable_tags=${applied.enableTags.join(',') || '-'} ` +
+      `disable_tags=${applied.disableTags.join(',') || '-'} ` +
+      `readonly=${applied.readonly} disabled_ops=${applied.disabledOperations}\n` +
+      `[hudu-mcp-all] base=${config.baseUrl} maxRetries=${config.maxRetries} ` +
+      `maxResponseBytes=${config.maxResponseBytes}\n`
   );
+  for (const w of filterResult.warnings) {
+    process.stderr.write(`[hudu-mcp-all] warn: ${w}\n`);
+  }
 }
 
 main().catch((err) => {
+  if (err instanceof FilterError) {
+    process.stderr.write(`[hudu-mcp-all] config error: ${err.message}\n`);
+    process.exit(2);
+  }
   process.stderr.write(`[hudu-mcp-all] fatal: ${err instanceof Error ? err.stack : String(err)}\n`);
   process.exit(1);
 });
