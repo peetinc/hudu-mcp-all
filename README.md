@@ -54,7 +54,7 @@ Provide **one** of:
 | `HUDU_DISABLED_OPERATIONS=delete_companies_id,delete_articles_id` | Disable specific tools by `operationId`. |
 | `HUDU_TIMEOUT_MS=30000` | HTTP request timeout. |
 | `HUDU_MAX_RETRIES=3` | Retries on HTTP 429; honors `Retry-After`. |
-| `HUDU_MAX_RESPONSE_BYTES=1500000` | Response body truncation guard (prevents MCP context blow-up). |
+| `HUDU_MAX_RESPONSE_BYTES=100000` | Response truncation guard (~100KB default to fit MCP transport limits). |
 | `HUDU_SWAGGER_PATH=/path/to/swagger.json` | Override bundled spec. |
 
 ### Presets
