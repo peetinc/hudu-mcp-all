@@ -15,6 +15,8 @@ import { buildTools } from './swagger.js';
 import { callTool } from './hudu-client.js';
 import type { SwaggerSpec, ToolDef } from './types.js';
 
+const VERSION = '0.2.0';
+
 function locateSwagger(): string {
   const here = dirname(fileURLToPath(import.meta.url));
   const candidates = [
@@ -44,7 +46,7 @@ async function main(): Promise<void> {
   const toolMap = new Map<string, ToolDef>(tools.map((t) => [t.name, t]));
 
   const server = new Server(
-    { name: 'hudu-mcp-all', version: '0.1.0' },
+    { name: 'hudu-mcp-all', version: VERSION },
     { capabilities: { tools: {} } }
   );
 
@@ -66,12 +68,18 @@ async function main(): Promise<void> {
     }
     try {
       const result = await callTool(tool, req.params.arguments, config);
-      const payload = {
+      const payload: Record<string, unknown> = {
         status: result.status,
         ok: result.ok,
         contentType: result.contentType,
         body: result.body,
       };
+      if (result.truncated) {
+        payload.truncated = true;
+        payload.originalBytes = result.originalBytes;
+      }
+      if (result.retries) payload.retries = result.retries;
+      if (result.binary) payload.binary = result.binary;
       return {
         isError: !result.ok,
         content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }],
@@ -86,9 +94,10 @@ async function main(): Promise<void> {
   await server.connect(transport);
 
   process.stderr.write(
-    `[hudu-mcp-all] loaded ${tools.length} tools from ${swaggerPath}\n` +
+    `[hudu-mcp-all v${VERSION}] loaded ${tools.length} tools from ${swaggerPath}\n` +
       `[hudu-mcp-all] base: ${config.baseUrl}\n` +
-      `[hudu-mcp-all] readonly=${config.readonly} disabled=${config.disabledOperations.size}\n`
+      `[hudu-mcp-all] readonly=${config.readonly} disabled=${config.disabledOperations.size} ` +
+      `maxRetries=${config.maxRetries} maxResponseBytes=${config.maxResponseBytes}\n`
   );
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "hudu-mcp-all",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Full-coverage Hudu MCP server. Generates MCP tools dynamically from the official Hudu Swagger spec — every documented endpoint, R/W.",
   "type": "module",
   "bin": {

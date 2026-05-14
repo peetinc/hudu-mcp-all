@@ -39,6 +39,8 @@ Alternative key source — put the key in `~/.hudukey` (default) or any file ref
 | `HUDU_READONLY=true` | Block all `DELETE` operations |
 | `HUDU_DISABLED_OPERATIONS=delete_companies_id,delete_articles_id` | Disable specific tools by name |
 | `HUDU_TIMEOUT_MS=30000` | HTTP request timeout |
+| `HUDU_MAX_RETRIES=3` | Retries on HTTP 429; honors `Retry-After` |
+| `HUDU_MAX_RESPONSE_BYTES=1500000` | Response body truncation guard (prevents MCP context blow-up) |
 | `HUDU_SWAGGER_PATH=/path/to/swagger.json` | Override bundled spec |
 
 ## Use with Claude Code
@@ -92,6 +94,20 @@ npm run list-tools
 ```
 
 Prints `METHOD  tool_name  /api/path` for every generated tool.
+
+## File uploads (Photos, Uploads, Public Photos)
+
+Tools that take a `file` form-data param accept three source formats:
+
+- **Absolute path**: `/Users/me/Pictures/server.png`
+- **Home-relative**: `~/Downloads/rack.jpg`
+- **Inline base64**: `base64:image/png|server.png;iVBORw0KG...` (mime+filename optional: `base64:<data>`)
+
+Server reads the file, detects mime by extension, and uploads as multipart.
+
+## Binary downloads (Exports, Photos, Uploads)
+
+Tools with a `download=true` query param return file bytes encoded as base64 in `binary.data` on the response. Cloud-storage redirects (302 to S3) return the redirect URL in `body.redirect` — fetch it directly to download large files.
 
 ## Updating the Hudu spec
 

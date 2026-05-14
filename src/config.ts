@@ -8,7 +8,14 @@ export type Config = {
   disabledOperations: Set<string>;
   readonly: boolean;
   timeoutMs: number;
+  maxRetries: number;
+  maxResponseBytes: number;
+  userAgentVersion: string;
 };
+
+const DEFAULT_MAX_RESPONSE_BYTES = 1_500_000;
+const DEFAULT_MAX_RETRIES = 3;
+const DEFAULT_TIMEOUT_MS = 30_000;
 
 function loadEnvFile(path: string): void {
   if (!existsSync(path)) return;
@@ -46,6 +53,13 @@ function resolveApiKey(): string {
   );
 }
 
+function parseIntEnv(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n >= 0 ? n : fallback;
+}
+
 export function loadConfig(): Config {
   loadEnvFile(resolve(process.cwd(), '.env'));
 
@@ -64,7 +78,15 @@ export function loadConfig(): Config {
   );
 
   const readonly = (process.env.HUDU_READONLY ?? 'false').toLowerCase() === 'true';
-  const timeoutMs = Number.parseInt(process.env.HUDU_TIMEOUT_MS ?? '30000', 10);
 
-  return { baseUrl, apiKey, disabledOperations, readonly, timeoutMs };
+  return {
+    baseUrl,
+    apiKey,
+    disabledOperations,
+    readonly,
+    timeoutMs: parseIntEnv('HUDU_TIMEOUT_MS', DEFAULT_TIMEOUT_MS),
+    maxRetries: parseIntEnv('HUDU_MAX_RETRIES', DEFAULT_MAX_RETRIES),
+    maxResponseBytes: parseIntEnv('HUDU_MAX_RESPONSE_BYTES', DEFAULT_MAX_RESPONSE_BYTES),
+    userAgentVersion: '0.2.0',
+  };
 }
