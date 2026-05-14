@@ -109,14 +109,36 @@ Server reads the file, detects mime by extension, and uploads as multipart.
 
 Tools with a `download=true` query param return file bytes encoded as base64 in `binary.data` on the response. Cloud-storage redirects (302 to S3) return the redirect URL in `body.redirect` — fetch it directly to download large files.
 
+## Hudu API documentation
+
+- **Interactive API docs (admin login required)**: `https://[your-domain].huducloud.com/`
+  → in-app: **Admin → API → Hudu API Documentation**
+- **Raw Swagger / OpenAPI spec (admin session cookie required)**: `https://[your-domain].huducloud.com/api-docs.json`
+- **Public REST API guide**: https://support.hudu.com/hc/en-us/articles/11422780787735-REST-API
+
 ## Updating the Hudu spec
 
-`swagger.json` is bundled in the repo. To refresh:
+`swagger.json` is bundled in the repo and drives all tool generation. To refresh from your instance:
 
-1. Log in to your Hudu instance as admin → **Admin → API → Hudu API Documentation**
-2. Grab the OpenAPI / Swagger JSON
-3. Drop it in at `swagger.json` (or point `HUDU_SWAGGER_PATH` at it)
-4. Restart the server — new endpoints become tools automatically
+**Option A — save from browser (simplest)**:
+1. Log into Hudu as admin in your browser.
+2. Open `https://[your-domain].huducloud.com/api-docs.json`
+3. Save the JSON response as `swagger.json` in this repo (overwrites bundled copy).
+4. `npm run build` — new endpoints become tools automatically on next server start.
+
+**Option B — `scripts/fetch-swagger.sh` with session cookie**:
+1. Log into Hudu as admin in your browser.
+2. DevTools → Application → Cookies → `[your-domain].huducloud.com` → copy `_hudu_session` value.
+3. Run:
+   ```bash
+   HUDU_SESSION_COOKIE='_hudu_session=<paste>' \
+   HUDU_BASE_URL=https://[your-domain].huducloud.com/api/v1 \
+   ./scripts/fetch-swagger.sh
+   ```
+
+**Option C — `HUDU_SWAGGER_PATH`**: point the server at a swagger file anywhere on disk without overwriting the bundled one.
+
+> Hudu does **not** accept the `x-api-key` header on `/api-docs.json`; admin session auth is the only path.
 
 ## Safety notes
 
