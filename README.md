@@ -30,7 +30,7 @@ HUDU_BASE_URL=https://yourorg.huducloud.com/api/v1
 HUDU_API_KEY=your-api-key-here
 ```
 
-Alternative key source — put the key in `~/.hudukey` (default) or any file referenced by `HUDU_API_KEY_FILE`.
+Get your API key from **Hudu Admin → API Keys**. Scope it tightly (passwords access, destructive actions, IP allowlist, per-company restrictions all configurable in Hudu).
 
 ### Optional knobs
 

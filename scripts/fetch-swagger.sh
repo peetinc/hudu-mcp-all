@@ -27,9 +27,6 @@ ROOT="${BASE%/api/v1}"
 ROOT="${ROOT%/}"
 
 KEY="${HUDU_API_KEY:-}"
-if [ -z "$KEY" ] && [ -f "$HOME/.hudukey" ]; then
-  KEY="$(tr -d '[:space:]' < "$HOME/.hudukey")"
-fi
 SESSION="${HUDU_SESSION_COOKIE:-}"
 
 CANDIDATES=(
