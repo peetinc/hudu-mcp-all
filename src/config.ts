@@ -1,4 +1,5 @@
 import { readFileSync, existsSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { resolve } from 'node:path';
 
 export type Config = {
@@ -47,11 +48,23 @@ function loadEnvFile(path: string): void {
 }
 
 function resolveApiKey(): string {
-  const key = process.env.HUDU_API_KEY?.trim();
-  if (!key) {
-    throw new Error('HUDU_API_KEY is required. Set it in your MCP client env or .env file.');
+  const envKey = process.env.HUDU_API_KEY?.trim();
+  if (envKey) return envKey;
+
+  const filePath = process.env.HUDU_API_KEY_FILE?.trim();
+  if (filePath) {
+    const expanded = filePath.startsWith('~') ? filePath.replace(/^~/, homedir()) : filePath;
+    if (!existsSync(expanded)) {
+      throw new Error(`HUDU_API_KEY_FILE='${filePath}' does not exist (resolved to ${expanded})`);
+    }
+    const fromFile = readFileSync(expanded, 'utf8').trim();
+    if (!fromFile) {
+      throw new Error(`HUDU_API_KEY_FILE='${filePath}' is empty`);
+    }
+    return fromFile;
   }
-  return key;
+
+  throw new Error('Hudu API key required. Set HUDU_API_KEY or HUDU_API_KEY_FILE.');
 }
 
 function parseIntEnv(name: string, fallback: number): number {

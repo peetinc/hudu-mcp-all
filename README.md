@@ -32,6 +32,17 @@ HUDU_API_KEY=your-api-key-here
 
 Get your API key from **Hudu Admin → API Keys**. Scope it tightly (passwords access, destructive actions, IP allowlist, per-company restrictions all configurable in Hudu).
 
+### API key sources
+
+Provide **one** of:
+
+| Var | Behavior |
+|---|---|
+| `HUDU_API_KEY` | Inline key value. |
+| `HUDU_API_KEY_FILE` | Path to a file containing the key (tilde-expanded). Useful for secret-manager wrappers that write to a tmpfile. **No default path** — must be explicit. |
+
+`HUDU_API_KEY` wins if both are set. If neither is set, the server hard-fails at startup.
+
 ### Optional knobs
 
 | Variable | Purpose |
